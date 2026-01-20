@@ -1,10 +1,11 @@
 const express = require("express");
 const Professor = require("../models/professor");
+const { ROLES } = require("../../consts");
 
 const router = express.Router();
 
 // Create a new professor
-router.post("/", async (req, res) => {
+router.post("/",verifyRole([ROLES.ADMIN]), async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
@@ -35,7 +36,7 @@ router.post("/", async (req, res) => {
 });
 
 // Get all professors
-router.get("/", async (req, res) => {
+router.get("/",verifyRole([ROLES.ADMIN,ROLES.AUTH_SERVICE]), async (req, res) => {
   try {
     const professors = await Professor.find(); // Exclude password
     return res.status(200).json(professors);
@@ -46,7 +47,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get a specific professor by ID
-router.get("/:id", async (req, res) => {
+router.get("/:id",verifyRole([ROLES.ADMIN,ROLES.PROFESSOR,ROLES.AUTH_SERVICE]), async (req, res) => {
   try {
     const professor = await Professor.findById(req.params.id).select(
       "-password"
@@ -67,7 +68,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Update a professor
-router.put("/:id", async (req, res) => {
+router.put("/:id",verifyRole([ROLES.ADMIN, ROLES.PROFESSOR]), async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
@@ -99,7 +100,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete a professor
-router.delete("/:id", async (req, res) => {
+router.delete("/:id",verifyRole([ROLES.ADMIN]), async (req, res) => {
   try {
     const professor = await Professor.findByIdAndDelete(req.params.id);
 

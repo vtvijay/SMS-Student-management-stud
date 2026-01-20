@@ -16,13 +16,31 @@ dotenv.config();
 // Student Login
 router.post("/student", async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
 
   try {
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+    const students = await fetchStudents();
+    const student = students.find((s) => s.email === email);
+    if (!student) {
+      return res.status(400).json({ message: "Student don't exist" });
     }
+
+    const isMatch = await bcrypt.compare(password, student.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect Password" });
+    }
+
+    const token = generateJWTWithPrivateKey({
+      id: student._id,
+      roles: [ROLES.STUDENT],
+    });
+
+    res.status(200).json({
+      message: "student login successfully",
+      access_token: token,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error" });
@@ -32,13 +50,31 @@ router.post("/student", async (req, res) => {
 // Professor Login
 router.post("/professor", async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
 
   try {
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+    const professors = await fetchProfessors();
+    const professor = professors.find((s) => s.email === email);
+    if (!professor) {
+      return res.status(400).json({ message: "Professor don't exist" });
     }
+
+    const isMatch = await bcrypt.compare(password, professor.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect Password" });
+    }
+
+    const token = generateJWTWithPrivateKey({
+      id: professor._id,
+      roles: [ROLES.PROFESSOR],
+    });
+
+    res.status(200).json({
+      message: "professor login successfully",
+      access_token: token,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error" });

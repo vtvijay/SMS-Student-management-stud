@@ -8,40 +8,10 @@ const { verifyRole, restrictStudentToOwnData } = require("./auth/util");
 const { ROLES } = require("../../consts");
 
 const router = express.Router(); // Create end point for student routes
-router.post("/", async (req, res) => {
-  const { name, email, password } = req.body;
-
-  if (!name || !email || !password) {
-    return res
-      .status(400)
-      .json({ message: "Please provide name, email or password" });
-  }
-  try {
-    // Try to find if the email exists
-    const existingStudent = await Student.findOne({ email });
-    if (existingStudent) {
-      return res
-        .status(400)
-        .json({ message: "Student with this email exists" });
-    }
-    const newStudent = new Student({ name, email, password });
-    const savedStudent = await newStudent.save();
-
-    res.status(201).json(savedStudent);
-  } catch (error) {
-    res.status(500).json({
-      message: "Unable to create student",
-    });
-  }
-});
-
-//
-//
-//
 
 
 // Create a new Student
-router.post("/", async (req, res) => {
+router.post("/",verifyRole([ROLES.ADMIN]), async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
@@ -72,7 +42,7 @@ router.post("/", async (req, res) => {
 });
 
 // Get all Students
-router.get("/", async (req, res) => {
+router.get("/",verifyRole([ROLES.ADMIN,ROLES.PROFESSOR,ROLES.AUTH_SERVICE]), async (req, res) => {
   try {
     const students = await Student.find(); // Exclude password
     return res.status(200).json(students);
@@ -83,7 +53,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get a specific student by ID
-router.get("/:id", async (req, res) => {
+router.get("/:id",verifyRole([ROLES.ADMIN,ROLES.PROFESSOR,ROLES.AUTH_SERVICE, ROLES.STUDENT]), async (req, res) => {
   try {
     const students = await Student.findById(req.params.id).select(
       "-password"
@@ -104,7 +74,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Update a student
-router.put("/:id", async (req, res) => {
+router.put("/:id",verifyRole([ROLES.ADMIN, ROLES.STUDENT]), async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -136,7 +106,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete a student
-router.delete("/:id", async (req, res) => {
+router.delete("/:id",verifyRole([ROLES.ADMIN]), async (req, res) => {
   try {
     const student = await Student.findByIdAndDelete(req.params.id);
 
