@@ -1,6 +1,7 @@
 const express = require("express");
 const Professor = require("../models/professor");
 const { ROLES } = require("../../consts");
+const { verifyRole, restrictProfessorToOwnData } = require("./auth/util");
 
 const router = express.Router();
 

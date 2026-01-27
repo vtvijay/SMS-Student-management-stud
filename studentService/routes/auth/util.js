@@ -1,9 +1,12 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const axios = require("axios");
-const { ROLES } = require("../../../consts");
+
+const { ROLES, AUTH_SERVICE } = require("../../../consts");
 
 dotenv.config();
+
+const trustedDomain = [AUTH_SERVICE.split("api")[0]];
 
 /**
  * Fetch the JWKS from a given URI.
@@ -23,9 +26,11 @@ async function fetchJWKS(jku) {
  */
 function getPublicKeyFromJWKS(kid, keys) {
   const key = keys.find((k) => k.kid === kid);
+
   if (!key) {
     throw new Error("Unable to find a signing key that matches the 'kid'");
   }
+
   return `-----BEGIN PUBLIC KEY-----\n${key.n}\n-----END PUBLIC KEY-----`;
 }
 
@@ -35,13 +40,16 @@ function getPublicKeyFromJWKS(kid, keys) {
  * @returns {Promise<object>} - A promise that resolves to the decoded JWT payload.
  */
 async function verifyJWTWithJWKS(token) {
-  console.log(token);
   const decodedHeader = jwt.decode(token, { complete: true }).header;
   const { kid, alg, jku } = decodedHeader;
 
   if (!kid || !jku) {
     throw new Error("JWT header is missing 'kid' or 'jku'");
   }
+
+  //   if (!trustedDomain.includes(jku.split(".well")[0])) {
+  //     throw new Error("Domain not supported");
+  //   }
 
   if (alg !== "RS256") {
     throw new Error(`Unsupported algorithm: ${alg}`);
@@ -71,9 +79,10 @@ function verifyRole(requiredRoles) {
       req.user = decoded; // Attach the decoded payload (user data) to the request object
 
       // Step 2: Check if the user has any of the required roles
+      // The some() method of Array instances tests whether at least one element in the array passes the test implemented by the provided function.
       const userRoles = req.user.roles || [];
       const hasRequiredRole = userRoles.some((role) =>
-        requiredRoles.includes(role),
+        requiredRoles.includes(role)
       );
       if (hasRequiredRole) {
         return next(); // User has at least one of the required roles, so proceed
@@ -91,16 +100,10 @@ function verifyRole(requiredRoles) {
   };
 }
 
-function restrictStudentToOwnData(req, res, next) {
-  if (req.user.roles.includes(ROLES.STUDENT) && req.user.id !== req.params.id) {
-    return res.status(403).json({
-      message: "Access forbidden: You can only access your own data",
-    });
-  }
-  next();
-}
+function restrictStudentToOwnData(req, res, next) {}
 
 module.exports = {
   verifyRole,
   restrictStudentToOwnData,
 };
+ 

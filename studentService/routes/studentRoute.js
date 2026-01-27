@@ -11,7 +11,7 @@ const router = express.Router(); // Create end point for student routes
 
 
 // Create a new Student
-router.post("/",verifyRole([ROLES.ADMIN]), async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
