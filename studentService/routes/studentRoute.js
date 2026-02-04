@@ -8,7 +8,7 @@ const { verifyRole, restrictStudentToOwnData } = require("./auth/util");
 const { ROLES } = require("../../consts");
 
 const router = express.Router(); // Create end point for student routes
-
+const {studentServiceLogger: logger} = require("../../logging")
 
 // Create a new Student
 router.post("/", async (req, res) => {
@@ -42,12 +42,14 @@ router.post("/", async (req, res) => {
 });
 
 // Get all Students
-router.get("/",verifyRole([ROLES.ADMIN,ROLES.PROFESSOR,ROLES.AUTH_SERVICE]), async (req, res) => {
+router.get("/",verifyRole([ROLES.ADMIN,ROLES.PROFESSOR,ROLES.AUTH_SERVICE, ROLES.ENROLLMENT_SERVICE]), async (req, res) => {
   try {
     const students = await Student.find(); // Exclude password
+    logger.info(`Fetched ${students.length} students`);
     return res.status(200).json(students);
   } catch (error) {
     console.error(error);
+    logger.error(`Error fetching students: ${error}`);
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 });
