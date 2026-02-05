@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const axios = require("axios");
+const rateLimit = require("express-rate-limit");
 
 const { ROLES, AUTH_SERVICE, ENROLLMENT_SERVICE } = require("../../../consts");
 
@@ -102,7 +103,21 @@ function verifyRole(requiredRoles) {
 
 function restrictStudentToOwnData(req, res, next) { }
 
+const jwtRateLimiter =rateLimit({
+  windowMs:60*1000,
+  max:10,
+  message: 'Too many request from this IP in Student Service',
+  headers:true,
+  keyGenerator: (req)=>req.user.id,
+  handler:(req,res)=>{
+    res.status(429).json({
+      message:"Too many Requests happen"
+    })
+  }
+})
+
 module.exports = {
   verifyRole,
   restrictStudentToOwnData,
+  jwtRateLimiter,
 };

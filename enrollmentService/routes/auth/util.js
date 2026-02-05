@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { ROLES, STUDENT_SERVICE, COURSE_SERVICE } = require("../../../consts");
-// const { getCorrelationId } = require("../../../correlationId");
+const { getCorrelationId } = require("../../../correlationId");
 
 dotenv.config();
 
@@ -45,7 +45,11 @@ const publicKey = fs.readFileSync(
  * @returns {Promise<Array>} - A promise that resolves to the JWKS keys.
  */
 async function fetchJWKS(jku) {
-  const response = await axios.get(jku);
+  const response = await axios.get(jku,{
+    headers: {
+      'x-correlation-id': getCorrelationId()
+    }
+  });
   return response.data.keys;
 }
 
